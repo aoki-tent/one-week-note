@@ -74,7 +74,7 @@ export function MemoRow({
       left: -(window.innerWidth * 0.5),
       right: window.innerWidth * 0.5,
     }),
-    [],
+    [window.innerWidth],
   );
 
   useEffect(() => {
@@ -275,7 +275,6 @@ export function MemoRow({
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
           dragConstraints={dragConstraints}
-          dragElastic={0}
           style={{ x }}
           onDrag={(_, info) => {
             const w = window.innerWidth;
