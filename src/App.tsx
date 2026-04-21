@@ -39,9 +39,9 @@ function App() {
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <header className="relative flex items-center justify-end h-10 px-3 shrink-0 bg-black">
+      <header className="relative flex items-center justify-end h-[60px] px-3 shrink-0 bg-black">
         <h1
-          className="absolute left-1/2 -translate-x-1/2 text-[11px] font-bold text-white select-none"
+          className="absolute left-1/2 -translate-x-1/2 text-[14px] font-bold text-white select-none"
           style={{
             fontFamily:
               "'DIN Condensed', 'DIN Alternate', 'Oswald', 'Barlow Condensed', 'Helvetica Neue', sans-serif",

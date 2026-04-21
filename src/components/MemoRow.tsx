@@ -59,6 +59,9 @@ export function MemoRow({
   const inputRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
 
+  const touchSwipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeDirection = useRef<'horizontal' | 'vertical' | null>(null);
+
   const pressTimer = useRef<number | null>(null);
   const pressStart = useRef<{ x: number; y: number; pointerId: number } | null>(
     null,
@@ -212,6 +215,52 @@ export function MemoRow({
     pressStart.current = null;
   };
 
+  const onTouchStartSwipe = (e: React.TouchEvent) => {
+    if (editing || isReorderingRef.current) return;
+    touchSwipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    swipeDirection.current = null;
+  };
+
+  const onTouchMoveSwipe = (e: React.TouchEvent) => {
+    if (!touchSwipeStart.current || isReorderingRef.current) return;
+    const dx = e.touches[0].clientX - touchSwipeStart.current.x;
+    const dy = e.touches[0].clientY - touchSwipeStart.current.y;
+    if (swipeDirection.current === null) {
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      swipeDirection.current = Math.abs(dx) >= Math.abs(dy) ? 'horizontal' : 'vertical';
+    }
+    if (swipeDirection.current === 'vertical') return;
+    e.preventDefault();
+    x.set(dx);
+    const w = window.innerWidth;
+    const leftDist = Math.max(0, -dx);
+    const rightDist = Math.max(0, dx);
+    const leftThreshold = w * LEFT_SWIPE_THRESHOLD;
+    const rightThreshold = w * RIGHT_SWIPE_THRESHOLD;
+    leftBgOpacity.set(leftDist >= leftThreshold ? 1 : (leftDist / leftThreshold) * 0.6);
+    rightBgOpacity.set(rightDist >= rightThreshold ? 1 : (rightDist / rightThreshold) * 0.6);
+  };
+
+  const onTouchEndSwipe = () => {
+    if (!touchSwipeStart.current || swipeDirection.current !== 'horizontal') {
+      touchSwipeStart.current = null;
+      swipeDirection.current = null;
+      return;
+    }
+    const currentX = x.get();
+    leftBgOpacity.set(0);
+    rightBgOpacity.set(0);
+    x.set(0);
+    touchSwipeStart.current = null;
+    swipeDirection.current = null;
+    const w = window.innerWidth;
+    if (currentX < -w * LEFT_SWIPE_THRESHOLD) {
+      onSwipeDelete();
+    } else if (currentX > w * RIGHT_SWIPE_THRESHOLD) {
+      onSwipeSend();
+    }
+  };
+
   const commitEdit = () => {
     const trimmed = draft.trim();
     if (trimmed === '') {
@@ -265,43 +314,12 @@ export function MemoRow({
 
         <motion.div
           className={`relative ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
-          drag={editing || isReordering ? false : 'x'}
-          dragDirectionLock
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.6}
-          style={{ x }}
-          onDrag={(_, info) => {
-            const w = window.innerWidth;
-            const leftThreshold = w * LEFT_SWIPE_THRESHOLD;
-            const rightThreshold = w * RIGHT_SWIPE_THRESHOLD;
-            const leftDist = Math.max(0, -info.offset.x);
-            const rightDist = Math.max(0, info.offset.x);
-            leftBgOpacity.set(
-              leftDist >= leftThreshold ? 1 : (leftDist / leftThreshold) * 0.6,
-            );
-            rightBgOpacity.set(
-              rightDist >= rightThreshold
-                ? 1
-                : (rightDist / rightThreshold) * 0.6,
-            );
-          }}
-          onDragEnd={(_, info) => {
-            leftBgOpacity.set(0);
-            rightBgOpacity.set(0);
-            if (isReorderingRef.current) {
-              x.set(0);
-              return;
-            }
-            const w = window.innerWidth;
-            if (info.offset.x < -w * LEFT_SWIPE_THRESHOLD) {
-              onSwipeDelete();
-            } else if (info.offset.x > w * RIGHT_SWIPE_THRESHOLD) {
-              onSwipeSend();
-            }
-            x.set(0);
-          }}
+          style={{ x, touchAction: 'pan-y' }}
+          onTouchStart={onTouchStartSwipe}
+          onTouchMove={onTouchMoveSwipe}
+          onTouchEnd={onTouchEndSwipe}
         >
-          <div className="flex items-center px-4 h-12">
+          <div className="flex items-center px-4 h-[72px]">
             <div className="flex-1 min-w-0 flex items-center" style={{ opacity }}>
               {editing ? (
                 <input
@@ -317,12 +335,12 @@ export function MemoRow({
                       commitEdit();
                     }
                   }}
-                  className="flex-1 bg-transparent outline-none text-base text-gray-900"
+                  className="flex-1 bg-transparent outline-none text-xl text-gray-900"
                 />
               ) : (
                 <button
                   type="button"
-                  className="flex-1 min-w-0 text-left truncate text-base text-gray-900"
+                  className="flex-1 min-w-0 text-left truncate text-xl text-gray-900"
                   onClick={() => {
                     const now = Date.now();
                     if (now - lastTapRef.current < DOUBLE_TAP_MS) {
@@ -366,13 +384,24 @@ export function MemoRow({
                 width="14"
                 height="12"
                 viewBox="0 0 14 12"
-                fill="currentColor"
                 aria-hidden="true"
               >
                 {expanded ? (
-                  <path d="M7 0 L14 12 L0 12 Z" />
+                  <path
+                    d="M7 1 L13 11 L1 11 Z"
+                    fill={memo.annotation.trim() ? 'black' : 'white'}
+                    stroke="black"
+                    strokeWidth="1"
+                    strokeLinejoin="round"
+                  />
                 ) : (
-                  <path d="M0 0 L14 0 L7 12 Z" />
+                  <path
+                    d="M1 1 L13 1 L7 11 Z"
+                    fill={memo.annotation.trim() ? 'black' : 'white'}
+                    stroke="black"
+                    strokeWidth="1"
+                    strokeLinejoin="round"
+                  />
                 )}
               </svg>
             </button>

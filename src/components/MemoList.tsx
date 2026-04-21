@@ -34,7 +34,7 @@ export function MemoList({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleSend = (memo: Memo) => {
-    window.open(buildSendUrl(memo, settings), '_blank', 'noopener,noreferrer');
+    location.href = buildSendUrl(memo, settings);
     onMarkSent(memo.id);
   };
 

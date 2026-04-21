@@ -15,7 +15,7 @@ export function InputRow({ onSubmit }: Props) {
   }, []);
 
   return (
-    <div className="flex items-center px-4 h-12 border-b border-gray-100">
+    <div className="flex items-center px-4 h-[72px] border-b border-gray-100">
       <input
         ref={ref}
         type="text"
@@ -36,7 +36,7 @@ export function InputRow({ onSubmit }: Props) {
         autoCapitalize="off"
         autoCorrect="off"
         spellCheck={false}
-        className="flex-1 bg-transparent outline-none text-base text-gray-900 placeholder-gray-300"
+        className="flex-1 bg-transparent outline-none text-xl text-gray-900 placeholder-gray-300"
         placeholder=""
       />
     </div>

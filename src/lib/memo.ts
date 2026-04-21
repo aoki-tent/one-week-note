@@ -28,21 +28,13 @@ export function deriveStatus(memo: Memo, now: Date): MemoStatus {
 }
 
 export function calculateOpacity(memo: Memo, now: Date): number {
+  if (memo.expiringAt) return 0.3;
   const ageMs = now.getTime() - new Date(memo.createdAt).getTime();
-  const ageRatio = Math.max(0, Math.min(1, ageMs / SIX_DAYS_MS));
-  const ageOpacity = 1 - ageRatio * 0.75;
-
-  // Not in expiring state: just age-based fade
-  if (!memo.expiringAt) {
-    return ageOpacity;
+  if (ageMs < DAY_MS) {
+    return 1.0 - (ageMs / DAY_MS) * 0.2;
   }
-
-  // Expiring via left-swipe or send: start from age-based opacity (capped so fresh
-  // memos still get a noticeable drop for visual feedback), fade to 0.15 over 24h
-  const sinceExpire = now.getTime() - new Date(memo.expiringAt).getTime();
-  const expireRatio = Math.max(0, Math.min(1, sinceExpire / DAY_MS));
-  const initialOpacity = Math.min(ageOpacity, 0.7);
-  return initialOpacity + (0.15 - initialOpacity) * expireRatio;
+  const aging = Math.min(1, (ageMs - DAY_MS) / (SIX_DAYS_MS - DAY_MS));
+  return 0.8 - aging * 0.5;
 }
 
 export function shouldAutoDelete(memo: Memo, now: Date): boolean {
