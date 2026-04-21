@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { InputRow } from './components/InputRow';
 import { MemoList } from './components/MemoList';
 import { SettingsScreen } from './components/SettingsScreen';
+import { OnboardingModal } from './components/OnboardingModal';
 import { useMemos } from './hooks/useMemos';
 import { useSettings } from './hooks/useSettings';
 
@@ -21,6 +22,20 @@ function App() {
   } = useMemos();
   const { settings, update: updateSettings } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(!settings.email);
+
+  useEffect(() => {
+    if (showOnboarding && settings.email) {
+      setShowOnboarding(false);
+    }
+  }, [settings.email, showOnboarding]);
+
+  const handleOnboardingClose = (email?: string) => {
+    if (email) {
+      updateSettings({ email });
+    }
+    setShowOnboarding(false);
+  };
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -63,6 +78,9 @@ function App() {
           />
         </div>
       </main>
+      {showOnboarding && (
+        <OnboardingModal onClose={handleOnboardingClose} />
+      )}
       {settingsOpen && (
         <SettingsScreen
           settings={settings}

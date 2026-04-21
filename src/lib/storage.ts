@@ -6,7 +6,7 @@ const SETTINGS_KEY = 'meemo:settings';
 const INITIALIZED_KEY = 'meemo:initialized';
 
 export const defaultSettings: Settings = {
-  email: 'aoki@tent1000.com',
+  email: '',
   quickSend: false,
 };
 
