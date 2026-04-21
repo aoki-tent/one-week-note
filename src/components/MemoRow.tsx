@@ -69,12 +69,9 @@ export function MemoRow({
   const totalCountRef = useRef(totalCount);
   const lastTapRef = useRef(0);
 
-  const dragConstraints = useMemo(
-    () => ({
-      left: -(window.innerWidth * 0.5),
-      right: window.innerWidth * 0.5,
-    }),
-    [window.innerWidth],
+  const maxDragDistance = useMemo(
+    () => window.innerWidth * 0.5,
+    [],
   );
 
   useEffect(() => {
@@ -274,7 +271,7 @@ export function MemoRow({
           className={`w-full relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
-          dragConstraints={dragConstraints}
+          dragElastic={0.2}
           style={{ x }}
           onDrag={(_, info) => {
             const w = window.innerWidth;
@@ -294,15 +291,19 @@ export function MemoRow({
           onDragEnd={(_, info) => {
             leftBgOpacity.set(0);
             rightBgOpacity.set(0);
-            x.set(0, { transition: { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] } });
             if (isReorderingRef.current) {
+              x.set(0);
               return;
             }
             const w = window.innerWidth;
             if (info.offset.x < -w * LEFT_SWIPE_THRESHOLD) {
               onSwipeDelete();
+              x.set(0);
             } else if (info.offset.x > w * RIGHT_SWIPE_THRESHOLD) {
               onSwipeSend();
+              x.set(0);
+            } else {
+              x.set(0, { transition: { duration: 0.15 } });
             }
           }}
         >
