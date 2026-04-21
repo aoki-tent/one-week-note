@@ -263,7 +263,7 @@ export function MemoRow({
         </motion.div>
 
         <motion.div
-          className={`relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
+          className={`w-full relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
           dragConstraints={{ left: -200, right: 200 }}
