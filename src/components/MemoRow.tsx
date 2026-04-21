@@ -287,8 +287,8 @@ export function MemoRow({
           onDragEnd={(_, info) => {
             leftBgOpacity.set(0);
             rightBgOpacity.set(0);
+            x.set(0, { transition: { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] } });
             if (isReorderingRef.current) {
-              x.set(0);
               return;
             }
             const w = window.innerWidth;
@@ -297,7 +297,6 @@ export function MemoRow({
             } else if (info.offset.x > w * RIGHT_SWIPE_THRESHOLD) {
               onSwipeSend();
             }
-            x.set(0, { transition: { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] } });
           }}
         >
           <div className="flex items-center px-4 h-12">
