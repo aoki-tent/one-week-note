@@ -266,7 +266,10 @@ export function MemoRow({
           className={`w-full relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
-          dragConstraints={{ left: -200, right: 200 }}
+          dragConstraints={{
+            left: -(window.innerWidth * 0.5),
+            right: window.innerWidth * 0.5,
+          }}
           dragElastic={0}
           style={{ x }}
           onDrag={(_, info) => {
