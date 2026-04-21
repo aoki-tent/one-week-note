@@ -69,10 +69,6 @@ export function MemoRow({
   const totalCountRef = useRef(totalCount);
   const lastTapRef = useRef(0);
 
-  const maxDragDistance = useMemo(
-    () => window.innerWidth * 0.5,
-    [],
-  );
 
   useEffect(() => {
     indexRef.current = index;
@@ -268,10 +264,11 @@ export function MemoRow({
         </motion.div>
 
         <motion.div
-          className={`w-full relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
+          className={`relative ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
-          dragElastic={0.2}
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.6}
           style={{ x }}
           onDrag={(_, info) => {
             const w = window.innerWidth;
@@ -298,13 +295,10 @@ export function MemoRow({
             const w = window.innerWidth;
             if (info.offset.x < -w * LEFT_SWIPE_THRESHOLD) {
               onSwipeDelete();
-              x.set(0);
             } else if (info.offset.x > w * RIGHT_SWIPE_THRESHOLD) {
               onSwipeSend();
-              x.set(0);
-            } else {
-              x.set(0, { transition: { duration: 0.15 } });
             }
+            x.set(0);
           }}
         >
           <div className="flex items-center px-4 h-12">

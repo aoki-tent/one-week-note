@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "own-stable",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "../one-week-note-stable"],
+      "port": 5174
     }
   ]
 }
