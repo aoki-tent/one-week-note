@@ -266,7 +266,7 @@ export function MemoRow({
           className={`relative ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
-          dragConstraints={{ left: 0, right: 0 }}
+          dragConstraints={false}
           dragElastic={0.6}
           style={{ x }}
           onDrag={(_, info) => {
