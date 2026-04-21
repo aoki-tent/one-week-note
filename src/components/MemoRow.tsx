@@ -1,5 +1,5 @@
 import { motion, useMotionValue } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Memo } from '../lib/memo';
 import { calculateOpacity, deriveStatus } from '../lib/memo';
 import { MemoAccordion } from './MemoAccordion';
@@ -68,6 +68,14 @@ export function MemoRow({
   const indexRef = useRef(index);
   const totalCountRef = useRef(totalCount);
   const lastTapRef = useRef(0);
+
+  const dragConstraints = useMemo(
+    () => ({
+      left: -(window.innerWidth * 0.5),
+      right: window.innerWidth * 0.5,
+    }),
+    [],
+  );
 
   useEffect(() => {
     indexRef.current = index;
@@ -266,10 +274,7 @@ export function MemoRow({
           className={`w-full relative overflow-hidden ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
           drag={editing || isReordering ? false : 'x'}
           dragDirectionLock
-          dragConstraints={{
-            left: -(window.innerWidth * 0.5),
-            right: window.innerWidth * 0.5,
-          }}
+          dragConstraints={dragConstraints}
           dragElastic={0}
           style={{ x }}
           onDrag={(_, info) => {
