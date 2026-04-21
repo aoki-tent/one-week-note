@@ -1,5 +1,5 @@
 import { motion, useMotionValue } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Memo } from '../lib/memo';
 import { calculateOpacity, deriveStatus } from '../lib/memo';
 import { MemoAccordion } from './MemoAccordion';
