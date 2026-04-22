@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# 人間作業用（デザイン素材など、Git 管理不要）
+人間作業用/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
