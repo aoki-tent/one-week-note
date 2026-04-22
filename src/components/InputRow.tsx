@@ -32,6 +32,12 @@ export function InputRow({ onSubmit }: Props) {
             }
           }
         }}
+        onBlur={() => {
+          if (value.trim() && !isComposing) {
+            onSubmit(value);
+            setValue('');
+          }
+        }}
         enterKeyHint="done"
         autoCapitalize="off"
         autoCorrect="off"
