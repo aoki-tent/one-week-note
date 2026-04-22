@@ -38,6 +38,11 @@ const tutorialItems: Array<{ body: string; annotation: string }> = [
     annotation:
       '一週間で消える、自分だけのノート。\n\nメモは便利。だけど整理しないと、よくわからないメモが山のように溜まってしまう。そんな状況をなんとかしたくて「とりあえず一週間だけおいといて、自動的に消えちゃうメモツール」を作りました。\nまずは書いてみて。追記したくなったら追記欄に記入。「このメモ大事かも！」と思えたなら右スワイプで自分のメールアドレスに一瞬で送信できます！\n\nDesigned by Ryosaku Aoki @ TENT',
   },
+  {
+    body: 'TENTについて',
+    annotation:
+      'このアプリ以外にも、象印STAN.、フライパンジュウ、DRAW A LINE、CHOPLATEなど、ミニマルで便利な道具を数多く考案し販売しています。お店もあるので、ぜひ見てみてください！\nhttps://tempo.tent1000.com/',
+  },
 ];
 
 export function createTutorialMemos(): Memo[] {

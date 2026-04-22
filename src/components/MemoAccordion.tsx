@@ -10,6 +10,28 @@ interface Props {
   onClose: () => void;
 }
 
+/** テキスト内の URL を検出して <a> リンクに変換する */
+function renderWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 underline break-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
+}
+
 export function MemoAccordion({
   memo,
   now,
@@ -20,6 +42,7 @@ export function MemoAccordion({
   const status = deriveStatus(memo, now);
   const readOnly = status === 'expiring';
   const [value, setValue] = useState(memo.annotation);
+  const [isEditingAnnotation, setIsEditingAnnotation] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -32,7 +55,17 @@ export function MemoAccordion({
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+  }, [value, isEditingAnnotation]);
+
+  useEffect(() => {
+    if (isEditingAnnotation) {
+      const el = taRef.current;
+      if (!el) return;
+      el.focus();
+      // カーソルを末尾へ
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, [isEditingAnnotation]);
 
   const commit = (next: string) => {
     setValue(next);
@@ -52,14 +85,33 @@ export function MemoAccordion({
         if (dy > 40) onClose();
       }}
     >
-      <textarea
-        ref={taRef}
-        value={value}
-        readOnly={readOnly}
-        onChange={(e) => commit(e.target.value)}
-        placeholder={readOnly ? '' : '追記'}
-        className="w-full resize-none bg-transparent outline-none text-sm text-gray-800 placeholder-gray-300 min-h-[3rem] leading-relaxed"
-      />
+      {/* 追記エリア：編集中は textarea、それ以外はリンク付きテキスト表示 */}
+      {!readOnly && isEditingAnnotation ? (
+        <textarea
+          ref={taRef}
+          value={value}
+          onChange={(e) => commit(e.target.value)}
+          onBlur={() => setIsEditingAnnotation(false)}
+          placeholder="追記"
+          className="w-full resize-none bg-transparent outline-none text-sm text-gray-800 placeholder-gray-300 min-h-[3rem] leading-relaxed"
+        />
+      ) : (
+        <div
+          className="w-full text-sm text-gray-800 min-h-[3rem] leading-relaxed whitespace-pre-wrap"
+          onClick={() => {
+            if (!readOnly) setIsEditingAnnotation(true);
+          }}
+        >
+          {value ? (
+            renderWithLinks(value)
+          ) : (
+            !readOnly && (
+              <span className="text-gray-300">追記</span>
+            )
+          )}
+        </div>
+      )}
+
       <div className="mt-3 flex items-end justify-between gap-2">
         <div>
           {status === 'expiring' && (
