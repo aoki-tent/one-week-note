@@ -60,7 +60,7 @@ export function AboutScreen({ onBack }: Props) {
           </div>
 
           <div>
-            <div className="font-medium text-gray-900">明日削除（左スワイプ）</div>
+            <div className="font-medium text-gray-900">翌日削除（左スワイプ）</div>
             <p className="text-sm">
               メモを左にスワイプすると「消失寸前状態」になり、1日後に自動消去されます。取り消したい時は第二階層を開いて「復帰」ボタン。
             </p>

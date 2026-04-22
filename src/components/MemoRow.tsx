@@ -1,4 +1,4 @@
-import { motion, useMotionValue } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Memo } from '../lib/memo';
 import { calculateOpacity, deriveStatus } from '../lib/memo';
@@ -6,10 +6,9 @@ import { MemoAccordion } from './MemoAccordion';
 
 interface Props {
   memo: Memo;
-  index: number;
-  totalCount: number;
   now: Date;
   expanded: boolean;
+  isNew?: boolean;
   onToggle: () => void;
   onClose: () => void;
   onChangeAnnotation: (value: string) => void;
@@ -18,21 +17,17 @@ interface Props {
   onSwipeDelete: () => void;
   onSwipeSend: () => void;
   onRestore: () => void;
-  onReorderFromTo: (fromIndex: number, toIndex: number) => void;
 }
 
 const LEFT_SWIPE_THRESHOLD = 0.45;
 const RIGHT_SWIPE_THRESHOLD = 0.5;
-const LONG_PRESS_MS = 600;
-const LONG_PRESS_MOVE_TOLERANCE = 8;
 const DOUBLE_TAP_MS = 320;
 
 export function MemoRow({
   memo,
-  index,
-  totalCount,
   now,
   expanded,
+  isNew = false,
   onToggle,
   onClose,
   onChangeAnnotation,
@@ -41,45 +36,24 @@ export function MemoRow({
   onSwipeDelete,
   onSwipeSend,
   onRestore,
-  onReorderFromTo,
 }: Props) {
   const x = useMotionValue(0);
-  const y = useMotionValue(0);
   const leftBgOpacity = useMotionValue(0);
   const rightBgOpacity = useMotionValue(0);
+  const [flashYellow, setFlashYellow] = useState(false);
+  const [flashKey, setFlashKey] = useState(0);
   const opacity = calculateOpacity(memo, now);
   const isExpiring = deriveStatus(memo, now) === 'expiring';
-  const deleteLabel = isExpiring ? 'いま削除' : '明日削除';
+  const deleteLabel = isExpiring ? 'いま削除' : '翌日削除';
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(memo.body);
   const [isComposing, setIsComposing] = useState(false);
-  const [isPressing, setIsPressing] = useState(false);
-  const [isReordering, setIsReordering] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef(0);
 
   const touchSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const swipeDirection = useRef<'horizontal' | 'vertical' | null>(null);
-
-  const pressTimer = useRef<number | null>(null);
-  const pressStart = useRef<{ x: number; y: number; pointerId: number } | null>(
-    null,
-  );
-  const isReorderingRef = useRef(false);
-  const rowHeightRef = useRef(48);
-  const indexRef = useRef(index);
-  const totalCountRef = useRef(totalCount);
-  const lastTapRef = useRef(0);
-
-
-  useEffect(() => {
-    indexRef.current = index;
-  }, [index]);
-
-  useEffect(() => {
-    totalCountRef.current = totalCount;
-  }, [totalCount]);
 
   useEffect(() => {
     setDraft(memo.body);
@@ -92,137 +66,25 @@ export function MemoRow({
     }
   }, [editing]);
 
+  const triggerFlash = () => {
+    setFlashYellow(true);
+    setFlashKey((k) => k + 1);
+  };
+
+  // 新規メモ追加時の黄色フラッシュ
   useEffect(() => {
-    if (isReordering) {
-      x.set(0);
-    }
-  }, [isReordering, x]);
-
-  const cancelPress = () => {
-    if (pressTimer.current !== null) {
-      window.clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-    setIsPressing(false);
-  };
-
-  const resetReorder = () => {
-    isReorderingRef.current = false;
-    setIsReordering(false);
-    setIsPressing(false);
-    y.set(0);
-    x.set(0);
-    pressStart.current = null;
-    if (pressTimer.current !== null) {
-      window.clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-  };
-
-  const finishReorder = () => {
-    if (!isReorderingRef.current || !pressStart.current) {
-      resetReorder();
-      return;
-    }
-    const dy = y.get();
-    const height = rowHeightRef.current || 48;
-    const shift = Math.round(dy / height);
-    const target = Math.max(
-      0,
-      Math.min(totalCountRef.current - 1, indexRef.current + shift),
-    );
-    const from = indexRef.current;
-    resetReorder();
-    if (target !== from) {
-      onReorderFromTo(from, target);
-    }
-  };
-
-  // Window-level pointer listeners while reordering — ensures we receive events
-  // even when the pointer leaves the row's bounds (which is what caused the
-  // "stuck reorder / blank row" bug).
-  useEffect(() => {
-    if (!isReordering) return;
-    const expectedId = pressStart.current?.pointerId;
-    const onMove = (e: PointerEvent) => {
-      if (!pressStart.current) return;
-      if (expectedId !== undefined && e.pointerId !== expectedId) return;
-      y.set(e.clientY - pressStart.current.y);
-    };
-    const onUp = (e: PointerEvent) => {
-      if (expectedId !== undefined && e.pointerId !== expectedId) return;
-      finishReorder();
-    };
-    const onCancel = () => {
-      resetReorder();
-      cancelPress();
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onCancel);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onCancel);
-    };
+    if (isNew) triggerFlash();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReordering]);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (editing) return;
-    pressStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      pointerId: e.pointerId,
-    };
-    // Measure actual row height now (before any scale transform is applied)
-    const rect = rowRef.current?.getBoundingClientRect();
-    if (rect && rect.height > 0) rowHeightRef.current = rect.height;
-    setIsPressing(true);
-    pressTimer.current = window.setTimeout(() => {
-      pressTimer.current = null;
-      isReorderingRef.current = true;
-      setIsReordering(true);
-      if ('vibrate' in navigator) navigator.vibrate(15);
-    }, LONG_PRESS_MS);
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!pressStart.current || isReorderingRef.current) return;
-    const dx = e.clientX - pressStart.current.x;
-    const dy = e.clientY - pressStart.current.y;
-    if (
-      Math.abs(dx) > LONG_PRESS_MOVE_TOLERANCE ||
-      Math.abs(dy) > LONG_PRESS_MOVE_TOLERANCE
-    ) {
-      cancelPress();
-    }
-  };
-
-  const onPointerUp = () => {
-    // If reorder is active, the window-level listener handles it.
-    if (!isReorderingRef.current) {
-      cancelPress();
-      pressStart.current = null;
-    }
-  };
-
-  const onPointerCancel = () => {
-    if (isReorderingRef.current) {
-      resetReorder();
-    }
-    cancelPress();
-    pressStart.current = null;
-  };
+  }, [isNew]);
 
   const onTouchStartSwipe = (e: React.TouchEvent) => {
-    if (editing || isReorderingRef.current) return;
+    if (editing) return;
     touchSwipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     swipeDirection.current = null;
   };
 
   const onTouchMoveSwipe = (e: React.TouchEvent) => {
-    if (!touchSwipeStart.current || isReorderingRef.current) return;
+    if (!touchSwipeStart.current) return;
     const dx = e.touches[0].clientX - touchSwipeStart.current.x;
     const dy = e.touches[0].clientY - touchSwipeStart.current.y;
     if (swipeDirection.current === null) {
@@ -255,8 +117,10 @@ export function MemoRow({
     swipeDirection.current = null;
     const w = window.innerWidth;
     if (currentX < -w * LEFT_SWIPE_THRESHOLD) {
+      triggerFlash();
       onSwipeDelete();
     } else if (currentX > w * RIGHT_SWIPE_THRESHOLD) {
+      triggerFlash();
       onSwipeSend();
     }
   };
@@ -276,29 +140,22 @@ export function MemoRow({
   };
 
   return (
-    <motion.div
-      ref={rowRef}
-      transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-      animate={{
-        scale: isReordering ? 1.04 : isPressing ? 1.015 : 1,
-        boxShadow: isReordering
-          ? '0 18px 36px rgba(0,0,0,0.22)'
-          : isPressing
-            ? '0 3px 10px rgba(0,0,0,0.08)'
-            : '0 0 0 rgba(0,0,0,0)',
-      }}
-      style={{
-        y,
-        position: 'relative',
-        zIndex: isReordering ? 100 : isPressing ? 2 : 'auto',
-        backgroundColor: isReordering ? '#ffffff' : 'transparent',
-      }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerCancel}
-    >
+    <div style={{ position: 'relative' }}>
       <div className="relative overflow-hidden border-b border-gray-200">
+        {/* 黄色フラッシュオーバーレイ */}
+        <AnimatePresence>
+          {flashYellow && (
+            <motion.div
+              key={flashKey}
+              className="absolute inset-0 pointer-events-none"
+              style={{ backgroundColor: '#fde047', zIndex: 20 }}
+              initial={{ opacity: 0.85 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.65, ease: 'easeOut' }}
+              onAnimationComplete={() => setFlashYellow(false)}
+            />
+          )}
+        </AnimatePresence>
         <motion.div
           className={`absolute inset-0 ${isExpiring ? 'bg-red-500' : 'bg-blue-400'} flex items-center justify-end pr-6 text-white text-sm font-medium pointer-events-none`}
           style={{ opacity: leftBgOpacity }}
@@ -313,7 +170,7 @@ export function MemoRow({
         </motion.div>
 
         <motion.div
-          className={`relative ${isReordering ? 'bg-white' : 'bg-gray-100'}`}
+          className="relative bg-gray-100"
           style={{ x, touchAction: 'pan-y' }}
           onTouchStart={onTouchStartSwipe}
           onTouchMove={onTouchMoveSwipe}
@@ -408,16 +265,27 @@ export function MemoRow({
           </div>
         </motion.div>
 
-        {expanded && (
-          <MemoAccordion
-            memo={memo}
-            now={now}
-            onChangeAnnotation={onChangeAnnotation}
-            onRestore={onRestore}
-            onClose={onClose}
-          />
-        )}
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              key="accordion"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              <MemoAccordion
+                memo={memo}
+                now={now}
+                onChangeAnnotation={onChangeAnnotation}
+                onRestore={onRestore}
+                onClose={onClose}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }

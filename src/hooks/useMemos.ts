@@ -34,10 +34,12 @@ export function useMemos() {
     };
   }, []);
 
-  const addMemo = useCallback((body: string) => {
+  const addMemo = useCallback((body: string): string | null => {
     const trimmed = body.trim();
-    if (!trimmed) return;
-    setMemos((prev) => [createMemo(trimmed), ...prev]);
+    if (!trimmed) return null;
+    const memo = createMemo(trimmed);
+    setMemos((prev) => [memo, ...prev]);
+    return memo.id;
   }, []);
 
   const updateAnnotation = useCallback((id: string, annotation: string) => {
@@ -81,10 +83,6 @@ export function useMemos() {
     setMemos((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const reorder = useCallback((next: Memo[]) => {
-    setMemos(next);
-  }, []);
-
   const resetTutorial = useCallback(() => {
     setMemos(createTutorialMemos());
   }, []);
@@ -99,7 +97,6 @@ export function useMemos() {
     markSent,
     restore,
     remove,
-    reorder,
     resetTutorial,
   };
 }

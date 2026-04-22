@@ -23,9 +23,9 @@ const tutorialItems: Array<{ body: string; annotation: string }> = [
     body: '書いたメモは7日後に消えます',
     annotation: '古いメモほど文字が薄く表示されています。',
   },
-  { body: '右スワイプでメモをメールへ送付', annotation: '' },
+  { body: '右スワイプでメモをメールへ送付', annotation: '登録したメールアドレスへ、メモが送付されます。送付後のメモは、翌日になったら消えます。' },
   {
-    body: '左スワイプでメモを明日削除',
+    body: '左スワイプでメモを翌日削除',
     annotation: 'さらに左スワイプすると、今すぐ削除',
   },
   {
