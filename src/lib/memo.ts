@@ -20,10 +20,11 @@ const DAY_MS = 24 * HOUR_MS;
 const SIX_DAYS_MS = 6 * DAY_MS;
 const SEVEN_DAYS_MS = 7 * DAY_MS;
 
-// フェーズ2の1日あたりの不透明度低下量（5段階で1.0→0.20）
-const AGING_STEP = 0.16;
+// フェーズ2の1日あたりの不透明度低下量（5段階で1.0→0.50）
+const AGING_STEP = 0.10;
 // フェーズ3（expiring）突入時の不透明度
-const EXPIRING_START = 0.20;
+// 翌日削除直後に「明確にグレー」と視認できる値
+const EXPIRING_START = 0.50;
 // フェーズ3終了時（削除直前）の不透明度
 const EXPIRING_END = 0.02;
 
