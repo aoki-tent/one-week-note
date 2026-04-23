@@ -102,18 +102,20 @@ export function MemoAccordion({
       ) : (
         <div
           className="w-full text-sm text-gray-800 min-h-[3rem] leading-relaxed whitespace-pre-wrap"
-          style={{ opacity: annotationOpacity }}
+          style={{ cursor: readOnly ? undefined : 'pointer' }}
           onClick={() => {
             if (!readOnly) setIsEditingAnnotation(true);
           }}
         >
-          {value ? (
-            renderWithLinks(value)
-          ) : (
-            !readOnly && (
-              <span className="text-gray-300">追記</span>
-            )
-          )}
+          <div style={{ opacity: annotationOpacity }}>
+            {value ? (
+              renderWithLinks(value)
+            ) : (
+              !readOnly && (
+                <span className="text-gray-300">追記</span>
+              )
+            )}
+          </div>
         </div>
       )}
 
