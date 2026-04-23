@@ -15,9 +15,17 @@ export interface Settings {
   quickSend: boolean;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 const SIX_DAYS_MS = 6 * DAY_MS;
 const SEVEN_DAYS_MS = 7 * DAY_MS;
+
+// フェーズ2の1日あたりの不透明度低下量（5段階で1.0→0.20）
+const AGING_STEP = 0.16;
+// フェーズ3（expiring）突入時の不透明度
+const EXPIRING_START = 0.20;
+// フェーズ3終了時（削除直前）の不透明度
+const EXPIRING_END = 0.02;
 
 export function deriveStatus(memo: Memo, now: Date): MemoStatus {
   if (memo.expiringAt) return 'expiring';
@@ -30,24 +38,27 @@ export function deriveStatus(memo: Memo, now: Date): MemoStatus {
 export function calculateOpacity(memo: Memo, now: Date): number {
   const ageMs = now.getTime() - new Date(memo.createdAt).getTime();
 
-  // 経年ベースの opacity（通常状態）
-  let ageOpacity: number;
-  if (ageMs < DAY_MS) {
-    ageOpacity = 1.0 - (ageMs / DAY_MS) * 0.2;
-  } else {
-    const aging = Math.min(1, (ageMs - DAY_MS) / (SIX_DAYS_MS - DAY_MS));
-    ageOpacity = 0.8 - aging * 0.5;
+  // フェーズ3（expiring）突入からの経過時間を求める
+  let sinceExpire: number | null = null;
+  if (memo.expiringAt) {
+    sinceExpire = Math.max(0, now.getTime() - new Date(memo.expiringAt).getTime());
+  } else if (ageMs >= SIX_DAYS_MS) {
+    // 自然寿命：6日経過時点が expiring 開始
+    sinceExpire = ageMs - SIX_DAYS_MS;
   }
 
-  if (!memo.expiringAt) return ageOpacity;
+  // フェーズ3：1時間ごとに等間隔で 0.20 → 0.02 まで低下（24段階）
+  if (sinceExpire !== null) {
+    const h = Math.min(24, Math.floor(sinceExpire / HOUR_MS));
+    return Math.max(EXPIRING_END, EXPIRING_START - h * ((EXPIRING_START - EXPIRING_END) / 24));
+  }
 
-  // 消失寸前：2乗カーブで 24 時間かけて 0.05 まで加速フェード
-  // 1時間あたり約 0.06 ずつ下がり、変化が体感しやすい
-  const sinceExpire = now.getTime() - new Date(memo.expiringAt).getTime();
-  const expireRatio = Math.max(0, Math.min(1, sinceExpire / DAY_MS));
-  const initial = Math.min(ageOpacity, 0.75);
-  const remaining = 1 - expireRatio;
-  return (initial - 0.05) * remaining * remaining + 0.05;
+  // フェーズ1：作成後 24h は 1.0 固定
+  if (ageMs < DAY_MS) return 1.0;
+
+  // フェーズ2：1〜5日目、24時間ごとに1段階ずつ低下（5段階で 0.84 → 0.20）
+  const dayStep = Math.min(4, Math.floor((ageMs - DAY_MS) / DAY_MS));
+  return Math.max(EXPIRING_START, 1.0 - (dayStep + 1) * AGING_STEP);
 }
 
 export function shouldAutoDelete(memo: Memo, now: Date): boolean {
