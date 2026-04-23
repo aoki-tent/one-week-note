@@ -24,7 +24,7 @@ const SEVEN_DAYS_MS = 7 * DAY_MS;
 const AGING_STEP = 0.10;
 // フェーズ3（expiring）突入時の不透明度
 // 翌日削除直後に「明確にグレー」と視認できる値
-const EXPIRING_START = 0.50;
+const EXPIRING_START = 0.20;
 // フェーズ3終了時（削除直前）の不透明度
 const EXPIRING_END = 0.02;
 
