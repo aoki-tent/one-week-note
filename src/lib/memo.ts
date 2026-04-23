@@ -28,13 +28,26 @@ export function deriveStatus(memo: Memo, now: Date): MemoStatus {
 }
 
 export function calculateOpacity(memo: Memo, now: Date): number {
-  if (memo.expiringAt) return 0.3;
   const ageMs = now.getTime() - new Date(memo.createdAt).getTime();
+
+  // 経年ベースの opacity（通常状態）
+  let ageOpacity: number;
   if (ageMs < DAY_MS) {
-    return 1.0 - (ageMs / DAY_MS) * 0.2;
+    ageOpacity = 1.0 - (ageMs / DAY_MS) * 0.2;
+  } else {
+    const aging = Math.min(1, (ageMs - DAY_MS) / (SIX_DAYS_MS - DAY_MS));
+    ageOpacity = 0.8 - aging * 0.5;
   }
-  const aging = Math.min(1, (ageMs - DAY_MS) / (SIX_DAYS_MS - DAY_MS));
-  return 0.8 - aging * 0.5;
+
+  if (!memo.expiringAt) return ageOpacity;
+
+  // 消失寸前：2乗カーブで 24 時間かけて 0.05 まで加速フェード
+  // 1時間あたり約 0.06 ずつ下がり、変化が体感しやすい
+  const sinceExpire = now.getTime() - new Date(memo.expiringAt).getTime();
+  const expireRatio = Math.max(0, Math.min(1, sinceExpire / DAY_MS));
+  const initial = Math.min(ageOpacity, 0.75);
+  const remaining = 1 - expireRatio;
+  return (initial - 0.05) * remaining * remaining + 0.05;
 }
 
 export function shouldAutoDelete(memo: Memo, now: Date): boolean {
