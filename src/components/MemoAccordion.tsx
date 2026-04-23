@@ -5,6 +5,7 @@ import { deriveStatus, formatCreatedAt } from '../lib/memo';
 interface Props {
   memo: Memo;
   now: Date;
+  opacity: number;
   onChangeAnnotation: (value: string) => void;
   onRestore: () => void;
   onClose: () => void;
@@ -35,11 +36,14 @@ function renderWithLinks(text: string) {
 export function MemoAccordion({
   memo,
   now,
+  opacity,
   onChangeAnnotation,
   onRestore,
   onClose,
 }: Props) {
   const status = deriveStatus(memo, now);
+  // 見出しが 0.5 未満のとき追記欄テキストも 0.5 に底上げ（編集中は除く）
+  const annotationOpacity = Math.max(0.5, opacity);
   const readOnly = status === 'expiring';
   const [value, setValue] = useState(memo.annotation);
   const [isEditingAnnotation, setIsEditingAnnotation] = useState(false);
@@ -98,6 +102,7 @@ export function MemoAccordion({
       ) : (
         <div
           className="w-full text-sm text-gray-800 min-h-[3rem] leading-relaxed whitespace-pre-wrap"
+          style={{ opacity: annotationOpacity }}
           onClick={() => {
             if (!readOnly) setIsEditingAnnotation(true);
           }}

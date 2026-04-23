@@ -43,6 +43,8 @@ export function MemoRow({
   const [flashYellow, setFlashYellow] = useState(false);
   const [flashKey, setFlashKey] = useState(0);
   const opacity = calculateOpacity(memo, now);
+  // アコーディオンが開いているときは見出し・シェブロンを最低 0.5 に引き上げて視認性確保
+  const displayOpacity = expanded ? Math.max(0.5, opacity) : opacity;
   const isExpiring = deriveStatus(memo, now) === 'expiring';
   const deleteLabel = isExpiring ? 'いま削除' : '翌日削除';
 
@@ -177,7 +179,7 @@ export function MemoRow({
           onTouchEnd={onTouchEndSwipe}
         >
           <div className="flex items-center px-4 h-[72px]">
-            <div className="flex-1 min-w-0 flex items-center" style={{ opacity }}>
+            <div className="flex-1 min-w-0 flex items-center" style={{ opacity: displayOpacity }}>
               {editing ? (
                 <input
                   ref={inputRef}
@@ -223,7 +225,7 @@ export function MemoRow({
             )}
             <button
               type="button"
-              style={{ opacity }}
+              style={{ opacity: displayOpacity }}
               className={`ml-2 w-8 h-8 flex items-center justify-center select-none ${
                 memo.annotation.trim() ? 'text-black' : 'text-white'
               }`}
@@ -278,6 +280,7 @@ export function MemoRow({
               <MemoAccordion
                 memo={memo}
                 now={now}
+                opacity={opacity}
                 onChangeAnnotation={onChangeAnnotation}
                 onRestore={onRestore}
                 onClose={onClose}
