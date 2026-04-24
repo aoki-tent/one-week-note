@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Memo } from '../lib/memo';
 import { createMemo, shouldAutoDelete } from '../lib/memo';
 import { createTutorialMemos, loadMemos, saveMemos } from '../lib/storage';
+import { trackEvent } from '../lib/analytics';
 
 export function useMemos() {
   const [memos, setMemos] = useState<Memo[]>(() => loadMemos());
@@ -39,6 +40,7 @@ export function useMemos() {
     if (!trimmed) return null;
     const memo = createMemo(trimmed);
     setMemos((prev) => [memo, ...prev]);
+    trackEvent('memo_created');
     return memo.id;
   }, []);
 

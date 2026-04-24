@@ -2,6 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { trackPwaLaunch } from './lib/analytics'
+
+// ホーム画面からの起動を毎回計測
+trackPwaLaunch()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -20,10 +20,10 @@ const DAY_MS = 24 * HOUR_MS;
 const SIX_DAYS_MS = 6 * DAY_MS;
 const SEVEN_DAYS_MS = 7 * DAY_MS;
 
-// フェーズ2の1日あたりの不透明度低下量（5段階で1.0→0.50）
-const AGING_STEP = 0.10;
-// フェーズ3（expiring）突入時の不透明度
-// 翌日削除直後に「明確にグレー」と視認できる値
+// フェーズ2：日ごとの opacity ルックアップ（2〜6日目、インデックス0が2日目）
+// 1日目→2日目で大きく落として「古さ」を認知させ、その後は緩やかに減衰
+const PHASE2_OPACITIES = [0.75, 0.60, 0.50, 0.40, 0.30];
+// フェーズ3（expiring）突入時の不透明度（6日目と同値でシームレス）
 const EXPIRING_START = 0.30;
 // フェーズ3終了時（削除直前）の不透明度
 const EXPIRING_END = 0.10;
@@ -57,9 +57,9 @@ export function calculateOpacity(memo: Memo, now: Date): number {
   // フェーズ1：作成後 24h は 1.0 固定
   if (ageMs < DAY_MS) return 1.0;
 
-  // フェーズ2：1〜5日目、24時間ごとに1段階ずつ低下（5段階で 0.84 → 0.20）
+  // フェーズ2：2〜6日目、24時間ごとにルックアップ値を返す
   const dayStep = Math.min(4, Math.floor((ageMs - DAY_MS) / DAY_MS));
-  return Math.max(EXPIRING_START, 1.0 - (dayStep + 1) * AGING_STEP);
+  return PHASE2_OPACITIES[dayStep];
 }
 
 export function shouldAutoDelete(memo: Memo, now: Date): boolean {
