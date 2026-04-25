@@ -52,6 +52,9 @@ export function MemoRow({
   const [draft, setDraft] = useState(memo.body);
   const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLButtonElement>(null);
+  const annotationRef = useRef(memo.annotation);
+  annotationRef.current = memo.annotation; // 毎レンダリングで最新値を保持
   const lastTapRef = useRef(0);
 
   const touchSwipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -67,6 +70,26 @@ export function MemoRow({
       inputRef.current?.select();
     }
   }, [editing]);
+
+  // 見出しが実際に見切れているとき、追記欄に全文を自動コピー
+  useEffect(() => {
+    if (editing) return; // 編集中は判定しない
+    const el = bodyRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      const el = bodyRef.current;
+      if (!el) return;
+      if (el.scrollWidth > el.clientWidth) {
+        const body = memo.body;
+        const existing = annotationRef.current;
+        // 追記欄の先頭がすでに本文と同じなら何もしない（二重登録防止）
+        if (!existing.startsWith(body)) {
+          const next = existing ? `${body}\n\n${existing}` : body;
+          onChangeAnnotation(next);
+        }
+      }
+    });
+  }, [memo.body, editing, onChangeAnnotation]);
 
   const triggerFlash = () => {
     setFlashYellow(true);
@@ -198,6 +221,7 @@ export function MemoRow({
                 />
               ) : (
                 <button
+                  ref={bodyRef}
                   type="button"
                   className="flex-1 min-w-0 text-left truncate text-xl text-gray-900"
                   onClick={() => {
