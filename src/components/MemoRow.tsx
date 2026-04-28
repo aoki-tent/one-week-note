@@ -273,7 +273,7 @@ export function MemoRow({
                   <path
                     d="M7 1 L13 11 L1 11 Z"
                     fill={memo.annotation.trim() ? 'black' : '#E6E6E1'}
-                    stroke={memo.annotation.trim() ? 'black' : '#E6E6E1'}
+                    stroke="black"
                     strokeWidth="1"
                     strokeLinejoin="round"
                   />
@@ -281,7 +281,7 @@ export function MemoRow({
                   <path
                     d="M1 1 L13 1 L7 11 Z"
                     fill={memo.annotation.trim() ? 'black' : '#E6E6E1'}
-                    stroke={memo.annotation.trim() ? 'black' : '#E6E6E1'}
+                    stroke="black"
                     strokeWidth="1"
                     strokeLinejoin="round"
                   />
