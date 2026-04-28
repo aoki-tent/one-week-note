@@ -50,7 +50,7 @@ function App() {
     <div className="h-full flex flex-col bg-white">
       <header className="relative flex items-center justify-end h-[60px] px-3 shrink-0 bg-black">
         <h1
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-bold text-white select-none"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-bold text-[#E6E6E1] select-none"
           style={{
             fontFamily:
               "'DIN Condensed', 'DIN Alternate', 'Oswald', 'Barlow Condensed', 'Helvetica Neue', sans-serif",
@@ -72,7 +72,7 @@ function App() {
         <div className="bg-white">
           <InputRow onSubmit={handleAddMemo} />
         </div>
-        <div className="bg-gray-100 min-h-full">
+        <div className="bg-[#E6E6E1] min-h-full">
           <MemoList
             memos={memos}
             now={now}

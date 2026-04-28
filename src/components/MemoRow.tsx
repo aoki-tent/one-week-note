@@ -195,7 +195,7 @@ export function MemoRow({
         </motion.div>
 
         <motion.div
-          className="relative bg-gray-100"
+          className="relative bg-[#E6E6E1]"
           style={{ x, touchAction: 'pan-y' }}
           onTouchStart={onTouchStartSwipe}
           onTouchMove={onTouchMoveSwipe}
@@ -251,7 +251,7 @@ export function MemoRow({
               type="button"
               style={{ opacity: displayOpacity }}
               className={`ml-2 w-8 h-8 flex items-center justify-center select-none ${
-                memo.annotation.trim() ? 'text-black' : 'text-white'
+                memo.annotation.trim() ? 'text-black' : 'text-[#E6E6E1]'
               }`}
               onClick={() => {
                 if (editing) {
